@@ -1,0 +1,11 @@
+# Selects every pod in the namespace and allows no ingress.
+# Egress is left open; this example is only the ingress half.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: demo
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

@@ -1,0 +1,7 @@
+# Policies only. The controller is a Helm release under kyverno/controller,
+# applied by Flux or by the helm command in the README. Applying it here
+# would require the Flux CRDs.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - kyverno/policies

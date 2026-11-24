@@ -1,0 +1,10 @@
+# baseline overlaps the privileged and hostPath rules. It does not cover
+# image tags or resource requests; Kyverno does.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: baseline
+    pod-security.kubernetes.io/warn: baseline

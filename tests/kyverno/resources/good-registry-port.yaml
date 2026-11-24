@@ -1,0 +1,16 @@
+# A registry port must not be read as an image tag.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good-registry-port
+  namespace: demo
+spec:
+  containers:
+    - name: app
+      image: registry.local:5000/team/api:2.0.1
+      securityContext:
+        privileged: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi

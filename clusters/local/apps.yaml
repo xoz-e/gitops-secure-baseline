@@ -1,0 +1,23 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: kyverno-policies
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps
+  prune: true
+  wait: true
+  # Turn this on when a service in apps/ is encrypted with SOPS, and create
+  # the Secret below out of band. Do not commit the key.
+  # decryption:
+  #   provider: sops
+  #   secretRef:
+  #     name: sops-age

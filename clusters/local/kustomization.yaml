@@ -1,0 +1,10 @@
+# flux bootstrap github --path=clusters/local syncs this directory.
+# Bootstrap writes clusters/local/flux-system/ and owns those files.
+# That directory is not in the repo until then.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - flux-system
+  - kyverno.yaml
+  - kyverno-policies.yaml
+  - apps.yaml

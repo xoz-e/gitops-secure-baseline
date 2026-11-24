@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: kubeconform and kyverno
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install kubeconform
+        run: |
+          set -euo pipefail
+          version=v0.8.0
+          file=kubeconform-linux-amd64.tar.gz
+          sha256=9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+          curl -fsSL -o "$file" "https://github.com/yannh/kubeconform/releases/download/${version}/${file}"
+          echo "${sha256}  ${file}" | sha256sum -c -
+          tar -xzf "$file" kubeconform
+          sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: Install Kyverno CLI
+        run: |
+          set -euo pipefail
+          version=v1.20.0
+          file=kyverno-cli_${version}_linux_x86_64.tar.gz
+          sha256=06b8f3ca7b5626473be8fb4d343ad54ab84e317142766f72420e7d44b80942e2
+          curl -fsSL -o "$file" "https://github.com/kyverno/kyverno/releases/download/${version}/${file}"
+          echo "${sha256}  ${file}" | sha256sum -c -
+          tar -xzf "$file" kyverno
+          sudo install -m 0755 kyverno /usr/local/bin/kyverno
+          kyverno version
+
+      - name: Validate manifests
+        run: hack/kubeconform.sh
+
+      - name: Test policies
+        run: kyverno test tests/kyverno

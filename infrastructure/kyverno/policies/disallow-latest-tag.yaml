@@ -1,0 +1,52 @@
+# An omitted tag is the same thing as latest, and latest moves. A digest
+# does not, so it is accepted. The tag is read from the last path segment
+# so a registry port (registry:5000/app:1.2) is not mistaken for a tag.
+# Workload namespaces only.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+spec:
+  validationActions:
+    - Deny
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  matchConditions:
+    - name: exclude-system-namespaces
+      expression: >-
+        !(object.metadata.?namespace.orValue('') in ['kube-system', 'kyverno', 'flux-system'])
+  variables:
+    - name: podSpec
+      expression: >-
+        object.spec.?jobTemplate.?spec.?template.?spec.orValue(
+          object.spec.?template.?spec.orValue(object.spec))
+    - name: images
+      expression: >-
+        (variables.podSpec.containers
+          + variables.podSpec.?initContainers.orValue([])
+          + variables.podSpec.?ephemeralContainers.orValue([])).map(c, c.image)
+  validations:
+    - expression: >-
+        variables.images.all(img,
+          img.contains('@') || (
+            img.split('/')[img.split('/').size() - 1].contains(':')
+            && !img.endsWith(':latest')))
+      message: >-
+        Pin every image to a tag other than latest, or to a sha256 digest.
+        A bare name and the tag latest are both rejected.

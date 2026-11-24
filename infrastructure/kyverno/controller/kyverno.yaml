@@ -1,0 +1,37 @@
+# Pinned chart. Bump the version in a pull request; do not float it.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: kyverno
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://kyverno.github.io/kyverno/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kyverno
+  namespace: flux-system
+spec:
+  interval: 30m
+  releaseName: kyverno
+  targetNamespace: kyverno
+  chart:
+    spec:
+      chart: kyverno
+      version: "3.10.0"
+      interval: 1h
+      sourceRef:
+        kind: HelmRepository
+        name: kyverno
+        namespace: flux-system
+  install:
+    createNamespace: true
+    crds: Create
+    remediation:
+      retries: 3
+  upgrade:
+    crds: CreateReplace
+    remediation:
+      retries: 3

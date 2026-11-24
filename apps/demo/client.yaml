@@ -1,0 +1,34 @@
+# Subject of the allow rule. It does nothing but stay up so you can wget
+# the demo Service from a pod the NetworkPolicy names.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-client
+  namespace: demo
+  labels:
+    app.kubernetes.io/name: demo-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: demo-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: demo-client
+    spec:
+      containers:
+        - name: client
+          image: busybox:1.37.0
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "while true; do sleep 3600; done"]
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 5m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi

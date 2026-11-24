@@ -1,0 +1,16 @@
+# Not a published digest. Used only to check that a sha256 pin passes.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good-digest
+  namespace: demo
+spec:
+  containers:
+    - name: app
+      image: nginx/nginx-unprivileged@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      securityContext:
+        privileged: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
