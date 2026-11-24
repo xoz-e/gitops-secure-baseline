@@ -1,0 +1,16 @@
+# Would fail every workload rule. It is in kube-system, so the rules skip it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: system-privileged
+  namespace: kube-system
+spec:
+  containers:
+    - name: app
+      image: nginx:latest
+      securityContext:
+        privileged: true
+  volumes:
+    - name: logs
+      hostPath:
+        path: /var/log

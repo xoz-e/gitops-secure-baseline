@@ -1,0 +1,44 @@
+# hostPath mounts the node into the pod. A log agent that must do this gets
+# a PolicyException for that workload, not a hole in this rule.
+# Workload namespaces only.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-hostpath
+spec:
+  validationActions:
+    - Deny
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  matchConditions:
+    - name: exclude-system-namespaces
+      expression: >-
+        !(object.metadata.?namespace.orValue('') in ['kube-system', 'kyverno', 'flux-system'])
+  variables:
+    - name: podSpec
+      expression: >-
+        object.spec.?jobTemplate.?spec.?template.?spec.orValue(
+          object.spec.?template.?spec.orValue(object.spec))
+    - name: volumes
+      expression: variables.podSpec.?volumes.orValue([])
+  validations:
+    - expression: variables.volumes.all(v, !has(v.hostPath))
+      message: >-
+        hostPath volumes are not allowed. If a node agent needs one, add a
+        PolicyException for that workload. See the exceptions section in the README.

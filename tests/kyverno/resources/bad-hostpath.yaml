@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-hostpath
+  namespace: demo
+spec:
+  containers:
+    - name: app
+      image: nginx/nginx-unprivileged:1.30.7-alpine
+      securityContext:
+        privileged: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+  volumes:
+    - name: logs
+      hostPath:
+        path: /var/log

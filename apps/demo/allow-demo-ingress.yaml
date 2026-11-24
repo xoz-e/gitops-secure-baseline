@@ -1,0 +1,21 @@
+# NetworkPolicy is additive. This opens TCP 8080 on the demo pods for
+# clients in the same namespace. Anything else stays denied.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-demo-from-client
+  namespace: demo
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: demo-client
+      ports:
+        - protocol: TCP
+          port: 8080

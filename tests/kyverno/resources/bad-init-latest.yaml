@@ -1,0 +1,23 @@
+# The app container is fine. The init container is not.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-init-latest
+  namespace: demo
+spec:
+  initContainers:
+    - name: init
+      image: busybox:latest
+      resources:
+        requests:
+          cpu: 5m
+          memory: 8Mi
+  containers:
+    - name: app
+      image: nginx/nginx-unprivileged:1.30.7-alpine
+      securityContext:
+        privileged: false
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi

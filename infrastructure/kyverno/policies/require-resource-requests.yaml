@@ -1,0 +1,47 @@
+# Requests are how the scheduler knows a pod fits. Limits are left to the
+# service. Ephemeral containers are a debug session and are not checked.
+# Workload namespaces only.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-resource-requests
+spec:
+  validationActions:
+    - Deny
+  failurePolicy: Fail
+  evaluation:
+    background:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs", "cronjobs"]
+  matchConditions:
+    - name: exclude-system-namespaces
+      expression: >-
+        !(object.metadata.?namespace.orValue('') in ['kube-system', 'kyverno', 'flux-system'])
+  variables:
+    - name: podSpec
+      expression: >-
+        object.spec.?jobTemplate.?spec.?template.?spec.orValue(
+          object.spec.?template.?spec.orValue(object.spec))
+    - name: containers
+      expression: >-
+        variables.podSpec.containers + variables.podSpec.?initContainers.orValue([])
+  validations:
+    - expression: >-
+        variables.containers.all(c,
+          has(c.resources) && has(c.resources.requests)
+          && has(c.resources.requests.cpu) && c.resources.requests.cpu != ''
+          && has(c.resources.requests.memory) && c.resources.requests.memory != '')
+      message: Every container and init container needs cpu and memory requests.

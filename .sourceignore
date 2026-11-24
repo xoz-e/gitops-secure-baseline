@@ -1,0 +1,6 @@
+# Flux artifact exclusions. Cluster state lives under clusters/, infrastructure/, and apps/.
+.github/
+tests/
+hack/
+Makefile
+infrastructure/kyverno/git/

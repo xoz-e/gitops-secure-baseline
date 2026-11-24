@@ -1,0 +1,120 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: demo-app
+policies:
+  - ../../infrastructure/kyverno/policies/disallow-privileged.yaml
+  - ../../infrastructure/kyverno/policies/disallow-latest-tag.yaml
+  - ../../infrastructure/kyverno/policies/require-resource-requests.yaml
+  - ../../infrastructure/kyverno/policies/restrict-hostpath.yaml
+  - ../../infrastructure/kyverno/git/disallow-raw-secrets.yaml
+resources:
+  - ../../apps/demo/deployment.yaml
+  - ../../apps/demo/client.yaml
+  - resources/bad-privileged.yaml
+  - resources/bad-latest.yaml
+  - resources/bad-no-tag.yaml
+  - resources/bad-no-requests.yaml
+  - resources/bad-hostpath.yaml
+  - resources/bad-secret.yaml
+  - resources/good-sops-secret.yaml
+  - resources/good-digest.yaml
+  - resources/good-registry-port.yaml
+  - resources/system-privileged.yaml
+  - resources/bad-init-latest.yaml
+results:
+  - isValidatingPolicy: true
+    policy: disallow-privileged
+    kind: Deployment
+    resources: [demo, demo-client]
+    result: pass
+  - isValidatingPolicy: true
+    policy: disallow-latest-tag
+    kind: Deployment
+    resources: [demo, demo-client]
+    result: pass
+  - isValidatingPolicy: true
+    policy: require-resource-requests
+    kind: Deployment
+    resources: [demo, demo-client]
+    result: pass
+  - isValidatingPolicy: true
+    policy: restrict-hostpath
+    kind: Deployment
+    resources: [demo, demo-client]
+    result: pass
+
+  - isValidatingPolicy: true
+    policy: disallow-privileged
+    kind: Pod
+    resources: [bad-privileged]
+    result: fail
+  - isValidatingPolicy: true
+    policy: disallow-privileged
+    kind: Pod
+    resources: [bad-latest, bad-no-tag, bad-no-requests, bad-hostpath, bad-init-latest, good-digest, good-registry-port]
+    result: pass
+  - isValidatingPolicy: true
+    policy: disallow-privileged
+    kind: Pod
+    resources: [system-privileged]
+    result: skip
+
+  - isValidatingPolicy: true
+    policy: disallow-latest-tag
+    kind: Pod
+    resources: [bad-latest, bad-no-tag, bad-init-latest]
+    result: fail
+  - isValidatingPolicy: true
+    policy: disallow-latest-tag
+    kind: Pod
+    resources: [bad-privileged, bad-no-requests, bad-hostpath, good-digest, good-registry-port]
+    result: pass
+  - isValidatingPolicy: true
+    policy: disallow-latest-tag
+    kind: Pod
+    resources: [system-privileged]
+    result: skip
+
+  - isValidatingPolicy: true
+    policy: require-resource-requests
+    kind: Pod
+    resources: [bad-no-requests]
+    result: fail
+  - isValidatingPolicy: true
+    policy: require-resource-requests
+    kind: Pod
+    resources: [bad-privileged, bad-latest, bad-no-tag, bad-hostpath, bad-init-latest, good-digest, good-registry-port]
+    result: pass
+  - isValidatingPolicy: true
+    policy: require-resource-requests
+    kind: Pod
+    resources: [system-privileged]
+    result: skip
+
+  - isValidatingPolicy: true
+    policy: restrict-hostpath
+    kind: Pod
+    resources: [bad-hostpath]
+    result: fail
+  - isValidatingPolicy: true
+    policy: restrict-hostpath
+    kind: Pod
+    resources: [bad-privileged, bad-latest, bad-no-tag, bad-no-requests, bad-init-latest, good-digest, good-registry-port]
+    result: pass
+  - isValidatingPolicy: true
+    policy: restrict-hostpath
+    kind: Pod
+    resources: [system-privileged]
+    result: skip
+
+  - isValidatingPolicy: true
+    policy: disallow-raw-secrets
+    kind: Secret
+    resources: [bad-raw-secret]
+    result: fail
+  - isValidatingPolicy: true
+    policy: disallow-raw-secrets
+    kind: Secret
+    resources: [good-sops]
+    result: pass

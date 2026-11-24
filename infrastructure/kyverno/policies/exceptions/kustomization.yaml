@@ -1,0 +1,4 @@
+# PolicyExceptions granted for this cluster. Empty on purpose.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
